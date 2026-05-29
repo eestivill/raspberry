@@ -1,0 +1,54 @@
+# =============================================================================
+# Docker Compose - Archivo Principal de Infraestructura
+# Raspberry Pi 4 (ARM64)
+# =============================================================================
+#
+# Este archivo define la red interna y configuración base para todos los
+# servicios. Los servicios individuales se definen en archivos override
+# dentro de services/<nombre>/docker-compose.override.yml
+#
+# USO:
+#   docker compose up -d                    # Iniciar todos los servicios
+#   docker compose down                     # Detener todos los servicios
+#   docker compose -f docker-compose.yml \
+#     -f services/mi-servicio/docker-compose.override.yml up -d
+#
+# AGREGAR UN NUEVO SERVICIO:
+#   1. Copiar services/service-template/ a services/<nombre-servicio>/
+#   2. Editar docker-compose.override.yml con la configuración del servicio
+#   3. Fijar una versión específica de imagen (NO usar 'latest')
+#   4. Ejecutar: ./manage.sh validate
+#   5. Ejecutar: ./manage.sh start
+#
+# SEGURIDAD POR DEFECTO:
+#   - Todos los contenedores ejecutan como usuario no-root (1000:1000)
+#   - Escalación de privilegios deshabilitada (no-new-privileges)
+#   - Puertos vinculados solo a localhost (127.0.0.1)
+#   - Límites de recursos: 1 CPU, 512MB RAM por defecto
+#   - Política de reinicio: máximo 5 reintentos
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Red Interna
+# -----------------------------------------------------------------------------
+# Red bridge dedicada para comunicación entre contenedores.
+# Los contenedores se resuelven entre sí por nombre de servicio (DNS interno).
+# El tráfico está aislado del exterior excepto puertos explícitamente expuestos.
+networks:
+  internal:
+    driver: bridge
+    name: rpi4_internal
+
+# -----------------------------------------------------------------------------
+# Volúmenes
+# -----------------------------------------------------------------------------
+# Los volúmenes se definen por servicio en sus archivos override.
+# La ruta base se configura en .env con VOLUMES_PATH (por defecto: ./volumes).
+# Cada servicio monta su volumen en: ${VOLUMES_PATH:-./volumes}/<nombre-servicio>/
+
+# -----------------------------------------------------------------------------
+# Servicios
+# -----------------------------------------------------------------------------
+# Los servicios se definen en archivos override individuales.
+# Ver services/service-template/docker-compose.override.yml como referencia.

@@ -1,0 +1,44 @@
+# Configuración del monitor de salud
+# Este archivo define todos los parámetros configurables del sistema de monitoreo.
+
+monitor:
+  # Intervalo entre verificaciones de salud de contenedores (segundos)
+  check_interval: 30
+  # Timeout máximo por intento de verificación de salud (segundos)
+  health_check_timeout: 5
+  # Número de fallos consecutivos antes de marcar un contenedor como no saludable
+  max_failures: 3
+  # Número máximo de reintentos de reinicio por contenedor
+  max_restarts: 3
+  # Ventana de tiempo para contar reintentos (segundos, 5 minutos)
+  restart_window: 300
+
+alerts:
+  # Porcentaje de uso de memoria que dispara una alerta
+  memory_threshold: 85
+  # Porcentaje de uso de CPU que dispara una alerta
+  cpu_threshold: 90
+  # Número de ciclos consecutivos con CPU alta antes de generar alerta
+  cpu_consecutive_cycles: 3
+  # Porcentaje de espacio en disco disponible por debajo del cual se genera alerta
+  disk_low_threshold: 10
+
+docker:
+  # Intervalo entre intentos de reconexión a Docker Engine (segundos)
+  reconnect_interval: 60
+  # Número máximo de intentos de reconexión antes de generar alerta crítica
+  max_reconnect_attempts: 10
+
+disk:
+  # Intervalo entre verificaciones de espacio en disco (segundos)
+  check_interval: 60
+  # Tiempo mínimo entre notificaciones de disco bajo (segundos, 10 minutos)
+  notification_cooldown: 600
+
+logging:
+  # Ruta del archivo de log (relativa al directorio del proyecto)
+  file: ../logs/health.log
+  # Tamaño máximo del archivo de log antes de rotar (MB)
+  max_size_mb: 10
+  # Número de archivos de log de respaldo a mantener
+  backup_count: 3

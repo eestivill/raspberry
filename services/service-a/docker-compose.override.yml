@@ -1,0 +1,124 @@
+# =============================================================================
+# Servicio de Ejemplo: nginx (ARM64)
+# =============================================================================
+#
+# Servicio web nginx configurado como ejemplo funcional para la infraestructura
+# Docker en Raspberry Pi 4 (ARM64).
+#
+# Este servicio demuestra todas las prácticas de seguridad obligatorias:
+#   - Usuario no-root (nginx user UID 101)
+#   - Escalación de privilegios deshabilitada (no-new-privileges)
+#   - Puerto vinculado solo a localhost (127.0.0.1)
+#   - Límites de recursos (CPU y memoria)
+#   - Imagen con versión específica fijada (NO latest)
+#   - Health check configurado
+#   - Política de reinicio con máximo de reintentos
+#
+# VERIFICACIÓN:
+#   curl http://127.0.0.1:8080/
+#
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # nginx - Servidor web de ejemplo
+  # ---------------------------------------------------------------------------
+  # Sirve contenido estático en el puerto 8080 (localhost).
+  # Otros contenedores pueden acceder vía: http://service-a:80
+  service-a:
+
+    # -------------------------------------------------------------------------
+    # Imagen Docker (ARM64 compatible, versión fijada)
+    # -------------------------------------------------------------------------
+    # nginx oficial soporta linux/arm64 nativamente.
+    # Usamos la variante alpine para menor consumo de recursos.
+    image: nginx:1.27.3-alpine
+
+    # -------------------------------------------------------------------------
+    # Usuario no-root (OBLIGATORIO)
+    # -------------------------------------------------------------------------
+    # nginx en alpine ejecuta el worker como usuario nginx (UID 101, GID 101).
+    # El proceso master necesita root para bind en puertos < 1024, pero al
+    # usar puerto 80 dentro del contenedor con la configuración por defecto
+    # de nginx, usamos el usuario nginx para el worker.
+    # Nota: nginx alpine está diseñado para ejecutar como UID 101 (nginx user).
+    user: "101:101"
+
+    # -------------------------------------------------------------------------
+    # Red interna
+    # -------------------------------------------------------------------------
+    networks:
+      - internal
+
+    # -------------------------------------------------------------------------
+    # Puertos expuestos (vinculados a localhost)
+    # -------------------------------------------------------------------------
+    # Solo accesible desde el propio host. Para acceso desde la red local,
+    # cambiar 127.0.0.1 por 0.0.0.0 y documentar la razón.
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    # -------------------------------------------------------------------------
+    # Volúmenes persistentes
+    # -------------------------------------------------------------------------
+    # Directorio para contenido web estático servido por nginx.
+    volumes:
+      - ${VOLUMES_PATH:-./volumes}/service-a:/usr/share/nginx/html:ro
+
+    # -------------------------------------------------------------------------
+    # Límites de recursos (OBLIGATORIO)
+    # -------------------------------------------------------------------------
+    # nginx para servir contenido estático requiere pocos recursos.
+    deploy:
+      resources:
+        limits:
+          cpus: "${DEFAULT_CPU_LIMIT:-0.5}"
+          memory: "${DEFAULT_MEMORY_LIMIT:-256M}"
+
+    # -------------------------------------------------------------------------
+    # Seguridad
+    # -------------------------------------------------------------------------
+    security_opt:
+      - no-new-privileges:true
+
+    # -------------------------------------------------------------------------
+    # Política de reinicio
+    # -------------------------------------------------------------------------
+    restart: on-failure:5
+
+    # -------------------------------------------------------------------------
+    # Health check
+    # -------------------------------------------------------------------------
+    # Verificar que nginx responde en el puerto 8080.
+    # Usamos wget (disponible en alpine) en lugar de curl.
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    # -------------------------------------------------------------------------
+    # Variables de entorno
+    # -------------------------------------------------------------------------
+    env_file:
+      - ../../.env
+
+    # -------------------------------------------------------------------------
+    # Configuración personalizada de nginx
+    # -------------------------------------------------------------------------
+    # Sobreescribir la configuración por defecto para escuchar en puerto 8080
+    # (permite ejecutar como usuario no-root sin privilegios de bind a <1024).
+    command: >
+      sh -c "
+      echo 'server { listen 8080; location / { root /usr/share/nginx/html; index index.html; } }' > /etc/nginx/conf.d/default.conf &&
+      nginx -g 'daemon off;'
+      "
+
+# -----------------------------------------------------------------------------
+# Referencia a la red externa (definida en docker-compose.yml principal)
+# -----------------------------------------------------------------------------
+networks:
+  internal:
+    external: true
+    name: rpi4_internal

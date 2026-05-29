@@ -1,0 +1,17 @@
+# =============================================================================
+# Dependencias Python - Monitor de Salud
+# =============================================================================
+# Instalar con: pip install -r requirements.txt
+
+# SDK de Docker para Python - interacción con Docker Engine
+docker>=7.0.0
+
+# Parser YAML - lectura de archivos de configuración
+pyyaml>=6.0
+
+# --- Testing ---
+# Framework de testing
+pytest>=7.4.0
+
+# Testing basado en propiedades (PBT)
+hypothesis>=6.82.0

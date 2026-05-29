@@ -1,0 +1,32 @@
+# =============================================================================
+# .gitignore - Infraestructura Docker Raspberry Pi 4
+# =============================================================================
+
+# --- Secretos y credenciales ---
+# El archivo .env contiene variables sensibles (contraseñas, tokens, etc.)
+.env
+
+# --- Datos persistentes ---
+# Los volúmenes contienen datos de los contenedores que no deben versionarse
+volumes/*
+!volumes/.gitkeep
+
+# --- Logs ---
+# Los logs del monitor de salud se generan en tiempo de ejecución
+logs/*
+!logs/.gitkeep
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+venv/
+.venv/
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,0 +1,143 @@
+# =============================================================================
+# Plantilla de Servicio - Docker Compose Override
+# =============================================================================
+#
+# INSTRUCCIONES:
+#   1. Copiar este directorio completo:
+#        cp -r services/service-template services/<nombre-servicio>
+#   2. Renombrar "mi-servicio" por el nombre real del servicio
+#   3. Configurar la imagen Docker (SIEMPRE con versión específica)
+#   4. Ajustar puertos, volúmenes y health check según necesidad
+#   5. Validar configuración: ./manage.sh validate
+#   6. Iniciar servicio: ./manage.sh start
+#
+# NOTAS DE SEGURIDAD:
+#   - El usuario no-root es OBLIGATORIO salvo excepción documentada
+#   - Los puertos DEBEN vincularse a 127.0.0.1 (localhost) por defecto
+#   - La escalación de privilegios está DESHABILITADA (no-new-privileges)
+#   - Los límites de recursos son OBLIGATORIOS para evitar consumo excesivo
+#   - Si se requiere root, documentar la justificación en un comentario
+#     con el prefijo "ROOT_EXCEPTION:" seguido de la razón
+#
+# VARIABLES DE ENTORNO DISPONIBLES (definidas en .env):
+#   - VOLUMES_PATH: Ruta base para volúmenes persistentes (default: ./volumes)
+#   - NETWORK_NAME: Nombre de la red interna (default: rpi4_internal)
+#   - CONTAINER_USER: Usuario por defecto (default: 1000:1000)
+#   - DEFAULT_CPU_LIMIT: Límite de CPU por defecto (default: 1.0)
+#   - DEFAULT_MEMORY_LIMIT: Límite de memoria por defecto (default: 512M)
+#
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Nombre del servicio
+  # ---------------------------------------------------------------------------
+  # Este nombre se usa como DNS interno en la red. Otros contenedores pueden
+  # comunicarse con este servicio usando: http://mi-servicio:<puerto>
+  mi-servicio:
+
+    # -------------------------------------------------------------------------
+    # Imagen Docker
+    # -------------------------------------------------------------------------
+    # IMPORTANTE: Siempre fijar una versión específica. NO usar 'latest'.
+    # Usar imágenes compatibles con ARM64/aarch64.
+    # Ejemplo: nginx:1.25.3-alpine, postgres:16.1-alpine
+    image: nombre-imagen:version-especifica
+
+    # -------------------------------------------------------------------------
+    # Usuario no-root (OBLIGATORIO)
+    # -------------------------------------------------------------------------
+    # Ejecutar el contenedor con un usuario sin privilegios de root.
+    # Formato: "UID:GID" - Se recomienda UID >= 1000.
+    # Si el servicio REQUIERE root, comentar esta línea y agregar:
+    #   # ROOT_EXCEPTION: <justificación detallada>
+    user: "${CONTAINER_USER:-1000:1000}"
+
+    # -------------------------------------------------------------------------
+    # Red interna
+    # -------------------------------------------------------------------------
+    # Conectar a la red bridge compartida para comunicación entre servicios.
+    networks:
+      - internal
+
+    # -------------------------------------------------------------------------
+    # Puertos expuestos
+    # -------------------------------------------------------------------------
+    # Vincular SIEMPRE a 127.0.0.1 (localhost) para evitar exposición externa.
+    # Formato: "127.0.0.1:<puerto-host>:<puerto-contenedor>"
+    # Solo exponer a 0.0.0.0 si se necesita acceso desde otros dispositivos
+    # en la red local, y documentar la razón.
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    # -------------------------------------------------------------------------
+    # Volúmenes persistentes
+    # -------------------------------------------------------------------------
+    # Montar datos que deben persistir entre reinicios del contenedor.
+    # La ruta base se define en .env (VOLUMES_PATH).
+    # Los datos se almacenan en: <VOLUMES_PATH>/<nombre-servicio>/
+    volumes:
+      - ${VOLUMES_PATH:-./volumes}/mi-servicio:/data
+
+    # -------------------------------------------------------------------------
+    # Límites de recursos (OBLIGATORIO)
+    # -------------------------------------------------------------------------
+    # Prevenir que un contenedor consuma todos los recursos del sistema.
+    # Valores por defecto: 1 CPU, 512MB RAM.
+    # Ajustar según las necesidades reales del servicio.
+    deploy:
+      resources:
+        limits:
+          cpus: "${DEFAULT_CPU_LIMIT:-1.0}"
+          memory: "${DEFAULT_MEMORY_LIMIT:-512M}"
+
+    # -------------------------------------------------------------------------
+    # Seguridad
+    # -------------------------------------------------------------------------
+    # Deshabilitar escalación de privilegios. Esto previene que procesos
+    # dentro del contenedor obtengan más privilegios que los asignados.
+    security_opt:
+      - no-new-privileges:true
+
+    # -------------------------------------------------------------------------
+    # Política de reinicio
+    # -------------------------------------------------------------------------
+    # Reiniciar automáticamente en caso de fallo, con un máximo de 5 intentos
+    # para prevenir bucles de reinicio infinitos.
+    restart: on-failure:5
+
+    # -------------------------------------------------------------------------
+    # Health check
+    # -------------------------------------------------------------------------
+    # Verificación periódica de salud del servicio.
+    # Ajustar el comando test según el servicio:
+    #   - HTTP: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+    #   - TCP:  ["CMD", "nc", "-z", "localhost", "8080"]
+    #   - CMD:  ["CMD-SHELL", "pg_isready -U postgres"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    # -------------------------------------------------------------------------
+    # Variables de entorno
+    # -------------------------------------------------------------------------
+    # Cargar variables desde el archivo .env del proyecto.
+    # Para variables específicas del servicio, usar la sección 'environment:'.
+    env_file:
+      - ../../.env
+
+    # Variables específicas del servicio (opcional):
+    # environment:
+    #   - MI_VARIABLE=valor
+    #   - OTRA_VARIABLE=${VARIABLE_DEL_ENV}
+
+# -----------------------------------------------------------------------------
+# Referencia a la red externa (definida en docker-compose.yml principal)
+# -----------------------------------------------------------------------------
+networks:
+  internal:
+    external: true
+    name: rpi4_internal
