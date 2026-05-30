@@ -71,7 +71,7 @@ Ir a **Settings → Devices & Services → Entities**. Deberías ver tus 4 enchu
    - Tap action: Toggle
 6. Repetir para cada consola
 
-### Panel con YAML (más control)
+## Panel con YAML (más control)
 
 Crear un dashboard personalizado. Ir a Settings → Dashboards → Add Dashboard → "Consolas".
 
@@ -83,13 +83,24 @@ views:
   - title: Consolas
     icon: mdi:gamepad-variant
     cards:
+      - type: markdown
+        content: |
+          ## 📺 Switch HDMI
+          | Entrada | Consola |
+          |---------|---------|
+          | HDMI 1 | PlayStation |
+          | HDMI 2 | Wii |
+          | HDMI 3 | Retron 5 |
+          | HDMI 4 | Switch |
+          | HDMI 5 | Gamecube |
+
       - type: grid
         columns: 2
         square: true
         cards:
           - type: button
             entity: switch.play
-            name: PlayStation
+            name: "1. PlayStation"
             icon: mdi:sony-playstation
             tap_action:
               action: toggle
@@ -98,7 +109,7 @@ views:
 
           - type: button
             entity: switch.wii
-            name: Wii
+            name: "2. Wii"
             icon: mdi:nintendo-wii
             tap_action:
               action: toggle
@@ -106,8 +117,17 @@ views:
             show_state: true
 
           - type: button
+            entity: switch.retron_5
+            name: "3. Retron 5"
+            icon: mdi:gamepad-classic
+            tap_action:
+              action: toggle
+            icon_height: 80px
+            show_state: true
+
+          - type: button
             entity: switch.switch
-            name: Switch
+            name: "4. Switch"
             icon: mdi:nintendo-switch
             tap_action:
               action: toggle
@@ -115,9 +135,9 @@ views:
             show_state: true
 
           - type: button
-            entity: switch.retron_5
-            name: Retron 5
-            icon: mdi:gamepad-classic
+            entity: switch.gamecube
+            name: "5. Gamecube"
+            icon: mdi:nintendo-gamecube
             tap_action:
               action: toggle
             icon_height: 80px
@@ -160,6 +180,7 @@ Puedes imprimir el QR y ponerlo junto a las consolas.
 | PlayStation | `mdi:sony-playstation` |
 | Wii | `mdi:nintendo-wii` |
 | Switch | `mdi:nintendo-switch` |
+| Gamecube | `mdi:nintendo-gamecube` |
 | Retron 5 | `mdi:gamepad-classic` |
 | Xbox | `mdi:microsoft-xbox` |
 | Genérico | `mdi:gamepad-variant` |
