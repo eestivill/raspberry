@@ -133,15 +133,6 @@ views:
               action: toggle
             icon_height: 80px
             show_state: true
-
-          - type: button
-            entity: switch.gamecube
-            name: "5. Gamecube"
-            icon: mdi:nintendo-gamecube
-            tap_action:
-              action: toggle
-            icon_height: 80px
-            show_state: true
 ```
 
 > **Importante**: Cambia los `entity` por los nombres reales que aparezcan en tu Home Assistant (dependen de cómo los tengas nombrados en Alexa).
