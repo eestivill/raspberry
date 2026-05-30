@@ -1,0 +1,56 @@
+# =============================================================================
+# Calibre-web — Biblioteca de ebooks con interfaz web
+# =============================================================================
+#
+# Acceso: http://<ip-raspberry>:8083
+# Credenciales por defecto: admin / admin123 (cambiar en primer acceso)
+#
+# Para subir libros: usar la interfaz web o copiar archivos a la carpeta
+# de la biblioteca en volumes/calibre-web/books/
+#
+# =============================================================================
+
+services:
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web:0.6.23
+    
+    networks:
+      - internal
+
+    ports:
+      - "0.0.0.0:8083:8083/tcp"  # Interfaz web
+
+    volumes:
+      - ${VOLUMES_PATH:-./volumes}/calibre-web/config:/config
+      - ${VOLUMES_PATH:-./volumes}/calibre-web/books:/books
+
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+
+    security_opt:
+      - no-new-privileges:true
+
+    restart: on-failure:5
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8083 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${PIHOLE_TZ:-Europe/Madrid}
+
+    env_file:
+      - ../../.env
+
+networks:
+  internal:
+    external: true
+    name: rpi4_internal

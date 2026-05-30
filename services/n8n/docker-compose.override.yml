@@ -1,0 +1,59 @@
+# =============================================================================
+# n8n — Plataforma de automatización de flujos de trabajo
+# =============================================================================
+#
+# Acceso: http://<ip-raspberry>:5678
+# Primera vez: crear cuenta de administrador
+#
+# Documentación: https://docs.n8n.io/
+#
+# =============================================================================
+
+services:
+  n8n:
+    image: n8nio/n8n:1.51.1
+    
+    user: "1000:1000"
+
+    networks:
+      - internal
+
+    ports:
+      - "0.0.0.0:5678:5678/tcp"  # Interfaz web
+
+    volumes:
+      - ${VOLUMES_PATH:-./volumes}/n8n:/home/node/.n8n
+
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+    security_opt:
+      - no-new-privileges:true
+
+    restart: on-failure:5
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 http://localhost:5678/healthz -O - || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+    environment:
+      - N8N_HOST=${N8N_HOST:-0.0.0.0}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://${N8N_HOST:-localhost}:5678/
+      - GENERIC_TIMEZONE=${PIHOLE_TZ:-Europe/Madrid}
+      - N8N_SECURE_COOKIE=false
+
+    env_file:
+      - ../../.env
+
+networks:
+  internal:
+    external: true
+    name: rpi4_internal
