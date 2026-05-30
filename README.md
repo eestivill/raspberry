@@ -2,6 +2,20 @@
 
 Infraestructura completa para ejecutar múltiples proyectos como contenedores Docker aislados en una Raspberry Pi 4 (ARM64).
 
+## Servicios incluidos
+
+| Servicio | Puerto | Descripción |
+|----------|--------|-------------|
+| [Pi-hole](services/pihole/README.md) | 53, 8080 | Bloqueador de anuncios a nivel de red |
+| [Portainer](services/portainer/README.md) | 9443 | Panel web para gestionar Docker |
+| [Ntfy](services/ntfy/README.md) | 8090 | Notificaciones push al móvil |
+| [Calibre-web](services/calibre-web/README.md) | 8083 | Biblioteca de ebooks |
+| [n8n](services/n8n/README.md) | 5678 | Automatización de flujos de trabajo |
+| [EmulatorJS](services/emulatorjs/README.md) | 3000, 8086 | Juegos retro en el navegador |
+| [Home Assistant](services/homeassistant/README.md) | 8123 | Control de enchufes y domótica |
+
+Cada servicio tiene su propio README con instrucciones detalladas en `services/<nombre>/README.md`.
+
 ## Características
 
 - Instalación automatizada de Docker Engine y Docker Compose para ARM64
