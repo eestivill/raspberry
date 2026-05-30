@@ -1,0 +1,60 @@
+# =============================================================================
+# EmulatorJS — Emulador retro en el navegador
+# =============================================================================
+#
+# Panel de gestión: http://<ip-raspberry>:3000
+# Jugar: http://<ip-raspberry>:8086
+#
+# Primer uso:
+#   1. Acceder al panel de gestión (puerto 3000)
+#   2. Subir ROMs o copiarlas a volumes/emulatorjs/data/roms/<consola>/
+#   3. Escanear desde el panel
+#   4. Jugar desde el puerto 8086
+#
+# =============================================================================
+
+services:
+  emulatorjs:
+    image: lscr.io/linuxserver/emulatorjs:1.9.2
+    
+    networks:
+      - internal
+
+    ports:
+      - "0.0.0.0:8086:80/tcp"    # Frontend para jugar
+      - "0.0.0.0:3000:3000/tcp"  # Panel de gestión (subir ROMs, configurar)
+
+    volumes:
+      - ${VOLUMES_PATH:-./volumes}/emulatorjs/config:/config
+      - ${VOLUMES_PATH:-./volumes}/emulatorjs/data:/data
+
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 512M
+
+    security_opt:
+      - no-new-privileges:true
+
+    restart: on-failure:5
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${PIHOLE_TZ:-Europe/Madrid}
+
+    env_file:
+      - ../../.env
+
+networks:
+  internal:
+    external: true
+    name: rpi4_internal
