@@ -1,0 +1,49 @@
+# =============================================================================
+# Home Assistant — Panel de control para enchufes inteligentes
+# =============================================================================
+#
+# Acceso: http://<ip-raspberry>:8123
+# Primera vez: crear cuenta de administrador
+#
+# Uso principal: Panel con botones para encender/apagar consolas retro
+# conectadas a enchufes Osram Smart+ controlados vía Alexa.
+#
+# ROOT_EXCEPTION: Home Assistant necesita acceso a la red del host para
+# descubrir dispositivos en la red local y comunicarse con ellos.
+# =============================================================================
+
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:2024.7.3
+    
+    # ROOT_EXCEPTION: Requiere acceso a red del host para descubrimiento
+    # de dispositivos y comunicación con servicios de domótica.
+    
+    network_mode: host
+
+    volumes:
+      - ${VOLUMES_PATH:-./volumes}/homeassistant/config:/config
+
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 512M
+
+    security_opt:
+      - no-new-privileges:true
+
+    restart: on-failure:5
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8123 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+    environment:
+      - TZ=${PIHOLE_TZ:-Europe/Madrid}
+
+    env_file:
+      - ../../.env
