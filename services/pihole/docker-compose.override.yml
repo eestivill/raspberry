@@ -1,0 +1,73 @@
+# =============================================================================
+# Pi-hole - Bloqueador de anuncios a nivel de red
+# =============================================================================
+#
+# Pi-hole actúa como servidor DNS para toda tu red local, bloqueando
+# dominios de anuncios y trackers antes de que lleguen a tus dispositivos.
+#
+# CONFIGURACIÓN POST-INSTALACIÓN:
+#   1. Acceder al panel web: http://<ip-raspberry>:8080/admin
+#   2. La contraseña se define en PIHOLE_WEBPASSWORD (ver .env)
+#   3. Configurar tu router para usar la IP de la Raspberry como DNS
+#      O configurar cada dispositivo individualmente
+#
+# NOTA DE SEGURIDAD:
+#   - Los puertos DNS (53) y web (8080) se exponen a la red local (0.0.0.0)
+#     porque Pi-hole necesita ser accesible desde todos los dispositivos.
+#   - Pi-hole requiere ejecutarse como root para vincular al puerto 53.
+#
+# =============================================================================
+
+services:
+  pihole:
+    image: pihole/pihole:2024.07.0
+    
+    # ROOT_EXCEPTION: Pi-hole necesita root para vincular al puerto 53 (DNS)
+    # y para gestionar las reglas de red internas.
+    # user: no se define, corre como root por necesidad del servicio
+
+    networks:
+      - internal
+
+    # Puertos expuestos a la red local (necesario para que otros dispositivos
+    # puedan usar Pi-hole como servidor DNS)
+    ports:
+      - "0.0.0.0:53:53/tcp"     # DNS TCP
+      - "0.0.0.0:53:53/udp"     # DNS UDP
+      - "0.0.0.0:8080:80/tcp"   # Panel web de administración
+
+    volumes:
+      - ${VOLUMES_PATH:-./volumes}/pihole/etc-pihole:/etc/pihole
+      - ${VOLUMES_PATH:-./volumes}/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+
+    security_opt:
+      - no-new-privileges:true
+
+    restart: on-failure:5
+
+    healthcheck:
+      test: ["CMD", "dig", "+norecurse", "+retry=0", "@127.0.0.1", "pi.hole"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+    environment:
+      - TZ=${PIHOLE_TZ:-Europe/Madrid}
+      - WEBPASSWORD=${PIHOLE_WEBPASSWORD:-changeme}
+      - DNSMASQ_LISTENING=all
+      - PIHOLE_DNS_=1.1.1.1;8.8.8.8
+
+    env_file:
+      - ../../.env
+
+networks:
+  internal:
+    external: true
+    name: rpi4_internal
